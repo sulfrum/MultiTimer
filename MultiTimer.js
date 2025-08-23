@@ -2,34 +2,40 @@
 int TIMER1_SECONDS = 115;  // 1 minuto e 55 secondi
 int TIMER2_SECONDS = 288;  // 4 minuti e 48 secondi
 int TIMER3_SECONDS = 14400;   // 4 ore
+int TIMER4_SECONDS = 28800; // 8 ore
 
 final int NUM_BUTTONS = 9;
 Button[] buttons = new Button[NUM_BUTTONS];
-TimerTriple[] timers = new TimerTriple[NUM_BUTTONS];
+TimerQuadruple[] timers = new TimerQuadruple[NUM_BUTTONS];
 PFont fontBold;
 
 void setup() {
-  size(500, 600);
-  fontBold = createFont("Courier-Bold", 16);
+  size(700, 600);
+  fontBold = createFont("Courier-Bold", 26);
   textFont(fontBold);
   for (int i = 0; i < NUM_BUTTONS; i++) {
     buttons[i] = new Button(20, 30 + i * 50, 40, 30, str(i + 1));
-		timers[i] = new TimerTriple(TIMER1_SECONDS * 1000, TIMER2_SECONDS * 1000, TIMER3_SECONDS * 1000);
-
+        timers[i] = new TimerQuadruple(
+            TIMER1_SECONDS * 1000,
+            TIMER2_SECONDS * 1000,
+            TIMER3_SECONDS * 1000,
+            TIMER4_SECONDS * 1000,
+        );
   }
 }
 
 void draw() {
   background(255);
-	
-	// Intestazioni delle colonne
+    
+// Intestazioni delle colonne
   textAlign(LEFT, BASELINE);
   fill(0);
   text("T1", 180, 20);
   text("T2", 260, 20);
   text("T3", 340, 20);
-  text("START", 420, 20);
-	
+  text("T4", 420, 20);
+  text("START", 500, 20);
+    
   for (int i = 0; i < NUM_BUTTONS; i++) {
     buttons[i].display();
     timers[i].update();
@@ -108,91 +114,71 @@ class Timer {
   }
 }
 
-class TimerTriple {
-  Timer t1, t2, t3;
+class TimerQuadruple {
+  Timer t1, t2, t3, t4;
   String startTimestamp = "";
-  String endTimestamp1 = "";
-  String endTimestamp2 = "";
-  String endTimestamp3 = "";
-
-  boolean t1Ended = false;
-  boolean t2Ended = false;
-  boolean t3Ended = false;
-
-  TimerTriple(int d1, int d2, int d3) {
+  String[] endTimestamps = {"", "", "", ""};
+  boolean[] ended = {false, false, false, false};
+  
+  TimerQuadruple(int d1, int d2, int d3, int d4) {
     t1 = new Timer(d1);
     t2 = new Timer(d2);
     t3 = new Timer(d3);
+    t4 = new Timer(d4);
   }
 
   void start() {
     t1.start();
     t2.start();
     t3.start();
-    t1Ended = t2Ended = t3Ended = false;
-    endTimestamp1 = endTimestamp2 = endTimestamp3 = "";
-    int h = hour();
-    int m = minute();
-    int s = second();
-    startTimestamp = nf(h, 2) + ":" + nf(m, 2) + ":" + nf(s, 2);
+    t4.start();
+      ended[0] = ended[1] = ended[2] = ended[3] = false;
+    endTimestamps[0] = endTimestamps[1] = endTimestamps[2] = endTimestamps[3] = "";
+      startTimestamp = currentTime();
   }
 
   void update() {
-    if (t1.isRunning()) {
-      t1.update();
-    } else if (!t1Ended && t1.startTime != 0) {
-      endTimestamp1 = currentTime();
-      t1Ended = true;
-    }
-
-    if (t2.isRunning()) {
-      t2.update();
-    } else if (!t2Ended && t2.startTime != 0) {
-      endTimestamp2 = currentTime();
-      t2Ended = true;
-    }
-
-    if (t3.isRunning()) {
-      t3.update();
-    } else if (!t3Ended && t3.startTime != 0) {
-      endTimestamp3 = currentTime();
-      t3Ended = true;
+    checkTimer(t1, 0);
+    checkTimer(t2, 1);
+    checkTimer(t3, 2);
+    checkTimer(t4, 3);
+  }
+  
+  void checkTimer(Timer t, int idx) {
+    if (t.isRunning()) {
+      t.update();
+    } else if (!ended[idx] && t.startTime != 0) {
+      endTimestamps[idx] = currentTime();
+      ended[idx] = true;
     }
   }
 
-  void display(float x, float y) {
-    fill(t1.isRunning() ? color(0, 150, 0) : 0);
-    text(t1.getFormattedTime(), x, y + 20);
-    if (endTimestamp1 != "") {
-      fill(150);
-      text("→ " + endTimestamp1, x, y + 40);
-    }
-
-    fill(t2.isRunning() ? color(0, 0, 150) : 0);
-    text(t2.getFormattedTime(), x + 80, y + 20);
-    if (endTimestamp2 != "") {
-      fill(150);
-      text("→ " + endTimestamp2, x + 80, y + 40);
-    }
-
-    fill(t3.isRunning() ? color(150, 0, 0) : 0);
-    text(t3.getFormattedTime(), x + 160, y + 20);
-    if (endTimestamp3 != "") {
-      fill(150);
-      text("→ " + endTimestamp3, x + 160, y + 40);
-    }
+ 
+    void display(float x, float y) {
+    showTimer(t1, 0, x, y, color(0,150,0));
+    showTimer(t2, 1, x+80, y, color(0,0,150));
+    showTimer(t3, 2, x+160, y, color(150,0,0));
+    showTimer(t4, 3, x+240, y, color(150,100,0));  // nuovo 8h
 
     if (startTimestamp != "") {
       fill(120);
-      text(startTimestamp, x + 260, y + 20);
+      text(startTimestamp, x + 340, y + 20);
     }
   }
 
-  String currentTime() {
-    return nf(hour(), 2) + ":" + nf(minute(), 2) + ":" + nf(second(), 2);
-  }
-}
+    void showTimer(Timer t, int idx, float x, float y, int col) {
+    fill(t.isRunning() ? col : 0);
+    text(t.getFormattedTime(), x, y + 20);
+    if (endTimestamps[idx] != "") {
+      fill(150);
+      text("→ " + endTimestamps[idx], x, y + 40);
+    }
+    }
 
+    String currentTime() {
+    return nf(hour(), 2) + ":" + nf(minute(), 2) + ":" + nf(second(), 2);
+      }
+}
 
 class Button {
   float x, y, w, h;
