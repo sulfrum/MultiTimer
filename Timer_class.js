@@ -20,6 +20,12 @@ class Timer {
     }
   }
 
+	void reset() {
+	  running = false;
+	  startTime = 0;
+	}
+
+
   String getFormattedTime() {
     int remaining;
 
@@ -58,4 +64,3 @@ class Timer {
     return running;
   }
 }
-
